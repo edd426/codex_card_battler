@@ -49,7 +49,14 @@ class Game {
     if (card.manaCost > this.currentUserMana) throw new Error('Not enough mana');
     this.userHand.splice(idx, 1);
     this.currentUserMana -= card.manaCost;
-    const creature = { ...card, currentHealth: card.health, hasAttacked: false };
+    // Create creature instance, track summoning sickness and attack status
+    const creature = {
+      ...card,
+      currentHealth: card.health,
+      hasAttacked: false,
+      // creatures cannot attack on the turn they are summoned unless they have Charge
+      summonedThisTurn: true
+    };
     this.userBoard.push(creature);
     this.logEvent(`You play ${card.name} (Cost ${card.manaCost})`);
   }
@@ -62,6 +69,18 @@ class Game {
     const attacker = this.userBoard.find(c => c.id === attackerId);
     if (!attacker) throw new Error('Attacking creature not found');
     if (attacker.hasAttacked) throw new Error('Creature has already attacked');
+    // Summoning sickness: cannot attack the turn summoned unless has Charge
+    if (attacker.summonedThisTurn && !attacker.charge) {
+      throw new Error(`${attacker.name} cannot attack until next turn`);
+    }
+    // Taunt: must attack taunt creatures first
+    const taunts = this.aiBoard.filter(c => c.taunt);
+    if (taunts.length > 0) {
+      // if attacking hero or a non-taunt creature, block
+      if (targetType === 'hero' || (targetType === 'creature' && !taunts.some(c => c.id === targetId))) {
+        throw new Error('Must attack taunt creatures first');
+      }
+    }
     // Attack hero
     if (targetType === 'hero') {
       this.aiHealth -= attacker.attack;
@@ -103,9 +122,12 @@ class Game {
     if (this.over) throw new Error('Game is already over');
     if (this.turn !== 'user') throw new Error('Not your turn');
 
-    // User creatures attack AI hero
+    // User creatures attack AI hero (skip those that attacked or have summoning sickness)
     for (const creature of this.userBoard) {
+      if (creature.hasAttacked) continue;
+      if (creature.summonedThisTurn && !creature.charge) continue;
       this.aiHealth -= creature.attack;
+      creature.hasAttacked = true;
       this.logEvent(`${creature.name} attacks AI hero for ${creature.attack}`);
       if (this.aiHealth <= 0) {
         this.over = true;
@@ -125,7 +147,7 @@ class Game {
       this.aiHand.push(...drawnAi);
       this.logEvent(`AI draws a card`);
     }
-    // AI plays creatures
+    // AI plays creatures, tracking summon status and attack flags
     let playable = true;
     while (playable) {
       const affordable = this.aiHand.filter(c => c.manaCost <= this.currentAiMana);
@@ -135,19 +157,50 @@ class Game {
       const idx2 = this.aiHand.findIndex(c => c.id === card.id);
       this.aiHand.splice(idx2, 1);
       this.currentAiMana -= card.manaCost;
-      const creature = { ...card, currentHealth: card.health };
+      const creature = {
+        ...card,
+        currentHealth: card.health,
+        hasAttacked: false,
+        summonedThisTurn: true
+      };
       this.aiBoard.push(creature);
       this.logEvent(`AI plays ${card.name} (Cost ${card.manaCost})`);
     }
-    // AI creatures attack you
-    for (const creature of this.aiBoard) {
-      this.userHealth -= creature.attack;
-      this.logEvent(`${creature.name} attacks you for ${creature.attack}`);
-      if (this.userHealth <= 0) {
-        this.over = true;
-        this.winner = 'ai';
-        this.logEvent(`You die. AI wins!`);
-        return;
+    // AI creatures attack (respecting Charge and summoning sickness) – prefer hitting taunt creatures
+    for (const creature of [...this.aiBoard]) {
+      if (creature.hasAttacked) continue;
+      if (creature.summonedThisTurn && !creature.charge) continue;
+      const tauntTargets = this.userBoard.filter(c => c.taunt);
+      if (tauntTargets.length > 0) {
+        // Attack a taunt creature first
+        const target = tauntTargets[0];
+        target.currentHealth -= creature.attack;
+        this.logEvent(`${creature.name} attacks ${target.name} for ${creature.attack}`);
+        // Retaliation
+        creature.currentHealth -= target.attack;
+        this.logEvent(`${target.name} retaliates for ${target.attack}`);
+        creature.hasAttacked = true;
+        // Remove dead creatures
+        if (target.currentHealth <= 0) {
+          this.userBoard = this.userBoard.filter(c => c !== target);
+          this.logEvent(`${target.name} dies`);
+        }
+        if (creature.currentHealth <= 0) {
+          this.aiBoard = this.aiBoard.filter(c => c !== creature);
+          this.logEvent(`${creature.name} dies`);
+          continue;
+        }
+      } else {
+        // No taunt, attack hero
+        this.userHealth -= creature.attack;
+        creature.hasAttacked = true;
+        this.logEvent(`${creature.name} attacks you for ${creature.attack}`);
+        if (this.userHealth <= 0) {
+          this.over = true;
+          this.winner = 'ai';
+          this.logEvent(`You die. AI wins!`);
+          return;
+        }
       }
     }
 
@@ -162,8 +215,15 @@ class Game {
       this.logEvent(`You draw a card`);
     }
     this.logEvent(`Turn ${this.turnCount}: your turn. Mana: ${this.currentUserMana}/${this.maxUserMana}`);
-    // Reset attack status for user creatures
-    this.userBoard.forEach(c => { c.hasAttacked = false; });
+    // Reset attack status and clear summoning sickness for all creatures
+    this.userBoard.forEach(c => {
+      c.hasAttacked = false;
+      c.summonedThisTurn = false;
+    });
+    this.aiBoard.forEach(c => {
+      c.hasAttacked = false;
+      c.summonedThisTurn = false;
+    });
   }
 
   getState() {

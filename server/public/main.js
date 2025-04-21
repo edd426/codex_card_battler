@@ -5,9 +5,18 @@ function App() {
   const [gameId, setGameId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedAttacker, setSelectedAttacker] = useState(null);
+  // load status definitions for hover tooltips
+  const [statuses, setStatuses] = useState([]);
 
   useEffect(() => {
     startGame();
+  }, []);
+  // fetch status definitions (charge, taunt)
+  useEffect(() => {
+    fetch('/statuses.json')
+      .then(res => res.json())
+      .then(data => setStatuses(data || []))
+      .catch(() => {});
   }, []);
   // Reset selected attacker when turn changes
   useEffect(() => {
@@ -115,7 +124,16 @@ function App() {
                   }}
                 >
                   {card.image && <img src={card.image} alt={card.name} />}
-                  <div>{card.name}</div>
+                  <div>
+                    {card.name}
+                    {statuses.filter(s => card[s.id]).map(s => (
+                      <span
+                        key={s.id}
+                        className={`status ${s.id}`}
+                        title={`${s.name}: ${s.description}`}
+                      >{s.name}</span>
+                    ))}
+                  </div>
                   <div>Cost: {card.manaCost} | {card.currentHealth} HP / {card.attack} ATK</div>
                 </div>
               );
@@ -131,7 +149,16 @@ function App() {
                 className={`card ${turn === 'user' && !over && selectedAttacker ? 'clickable' : ''}`}
                 onClick={() => selectedAttacker && attack(selectedAttacker, 'creature', card.id)}
               >
-                <div>{card.name}</div>
+                <div>
+                  {card.name}
+                  {statuses.filter(s => card[s.id]).map(s => (
+                    <span
+                      key={s.id}
+                      className={`status ${s.id}`}
+                      title={`${s.name}: ${s.description}`}
+                    >{s.name}</span>
+                  ))}
+                </div>
                 <div>Cost: {card.manaCost} | {card.currentHealth} HP / {card.attack} ATK</div>
               </div>
             ))}
@@ -148,7 +175,16 @@ function App() {
             onClick={() => playCard(card.id)}
           >
             {card.image && <img src={card.image} alt={card.name} />}
-            <div>{card.name}</div>
+            <div>
+              {card.name}
+              {statuses.filter(s => card[s.id]).map(s => (
+                <span
+                  key={s.id}
+                  className={`status ${s.id}`}
+                  title={`${s.name}: ${s.description}`}
+                >{s.name}</span>
+              ))}
+            </div>
             <div>Cost: {card.manaCost} | ATK: {card.attack} | HP: {card.health}</div>
           </div>
         ))}

@@ -66,4 +66,49 @@ describe('Game class', () => {
     // Attempt to play the expensive card
     expect(() => game.playCard(expensiveCard.id)).toThrow('Not enough mana');
   });
+  
+  test('AI attacks taunt creatures before hero', () => {
+    const game = new Game(cards);
+    // Place a taunt creature on the user's board with 0 attack to isolate behavior
+    const taunt = {
+      id: 999,
+      name: 'TauntMinion',
+      attack: 0,
+      health: 5,
+      manaCost: 0,
+      currentHealth: 5,
+      hasAttacked: false,
+      summonedThisTurn: false,
+      taunt: true
+    };
+    game.userBoard = [taunt];
+    // Place an AI attacker ready to attack
+    const attacker = {
+      id: 1000,
+      name: 'AIWarrior',
+      attack: 3,
+      health: 2,
+      currentHealth: 2,
+      hasAttacked: false,
+      summonedThisTurn: false
+    };
+    game.aiBoard = [attacker];
+    // Prevent AI from drawing or playing extra creatures
+    game.aiHand = [];
+    game.maxAiMana = 0;
+    game.currentAiMana = 0;
+    // Call endTurn to trigger AI attack phase
+    game.endTurn();
+    const state = game.getState();
+    // User hero should be unharmed
+    expect(state.userHealth).toBe(20);
+    // Taunt creature should have taken damage from the AI attacker
+    const remainingTaunt = state.userBoard.find(c => c.id === 999);
+    expect(remainingTaunt).toBeDefined();
+    expect(remainingTaunt.currentHealth).toBe(5 - attacker.attack);
+    // AI attacker should still be present and healthy (no retaliation)
+    expect(state.aiBoard).toHaveLength(1);
+    expect(state.aiBoard[0].id).toBe(1000);
+    expect(state.aiBoard[0].currentHealth).toBe(2);
+  });
 });

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "charge",
+    "name": "Charge",
+    "description": "This unit may attack immediately when played."
+  },
+  {
+    "id": "taunt",
+    "name": "Taunt",
+    "description": "Opponents must target this unit before others."
+  }
+]

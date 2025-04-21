@@ -94,7 +94,7 @@ describe('API endpoints', () => {
       expect(res.status).toBe(404);
     });
 
-    test('creature attacks AI hero once, then blocked', async () => {
+    test('creature attack behavior respects summoning sickness and one attack per turn', async () => {
       // start a fresh game
       let res = await request(app).post('/api/game/start');
       expect(res.status).toBe(200);
@@ -102,21 +102,31 @@ describe('API endpoints', () => {
       // play a playable card if available
       const playable = res.body.userHand.find(c => c.manaCost <= res.body.currentUserMana);
       if (!playable) {
-        // No playable card available for this game; skip rest
+        // No playable card available for this game; skip
         return;
       }
       res = await request(app)
         .post(`/api/game/${id}/play`)
         .send({ cardId: playable.id });
       expect(res.status).toBe(200);
-      // attack AI hero
+      // retrieve the creature and its properties
       const creature = res.body.userBoard[0];
+      expect(creature).toHaveProperty('id');
+      expect(creature).toHaveProperty('attack');
+      // Attempt first attack
       res = await request(app)
         .post(`/api/game/${id}/attack`)
         .send({ attackerId: creature.id, targetType: 'hero', targetId: null });
+      if (!creature.charge) {
+        // Non-charge creatures cannot attack on summon
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/cannot attack until next turn/i);
+        return;
+      }
+      // Charge creatures can attack immediately
       expect(res.status).toBe(200);
       expect(res.body.aiHealth).toBe(20 - creature.attack);
-      // second attack should be blocked
+      // Second attack should be blocked by already attacked
       res = await request(app)
         .post(`/api/game/${id}/attack`)
         .send({ attackerId: creature.id, targetType: 'hero', targetId: null });

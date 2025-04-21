@@ -153,3 +153,19 @@ body {
 .app h3 {
   margin-bottom: 10px;
 }
+/* Status badges on cards */
+.status {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  background: #ddd;
+  cursor: help;
+}
+.status.charge {
+  background-color: #ffd54f;
+}
+.status.taunt {
+  background-color: #aed581;
+}
