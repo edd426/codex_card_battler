@@ -1,0 +1,155 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.card {
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 5px;
+  width: 120px;
+  text-align: center;
+  cursor: pointer;
+  background: #f9f9f9;
+}
+
+.card img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ai-info {
+  margin-bottom: 20px;
+}
+
+.last-ai-card {
+  margin-top: 10px;
+}
+
+.game-over {
+  text-align: center;
+}
+
+.game-over button {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+/* Error message styling */
+.error {
+  color: red;
+  margin: 10px 0;
+  font-weight: bold;
+}
+/* Board and Board Sections */
+.board {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.board-section {
+  flex: 1;
+  border: 2px solid #777;
+  border-radius: 4px;
+  padding: 10px;
+  background: #f2f2f2;
+}
+
+.board-section h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.board-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Hand section styling */
+.hand h3 {
+  flex: 0 0 100%;
+  margin: 0 0 10px 0;
+}
+/* Card attack status and selection */
+.card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.card.selected {
+  border: 2px dashed #0077ff;
+}
+
+/* Highlight clickable cards */
+.card.clickable:hover {
+  background: #e0f7ff;
+}
+/* AI hero attack cue */
+.ai-hero.clickable {
+  cursor: pointer;
+  color: #0077ff;
+  text-decoration: underline;
+}
+.hand {
+  border: 2px solid #777;
+  border-radius: 4px;
+  padding: 10px;
+  background: #f2f2f2;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Actions styling */
+.actions {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.actions button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+}
+
+/* Log section styling */
+.log {
+  border: 2px solid #777;
+  border-radius: 4px;
+  padding: 10px;
+  background: #f2f2f2;
+  margin-top: 20px;
+}
+
+.log-entries {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Section headings */
+.app h3 {
+  margin-bottom: 10px;
+}
