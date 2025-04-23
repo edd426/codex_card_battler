@@ -185,7 +185,12 @@ function App() {
                 >{s.name}</span>
               ))}
             </div>
-            <div>Cost: {card.manaCost} | ATK: {card.attack} | HP: {card.health}</div>
+            <div>
+              Cost: {card.manaCost}
+              {card.spell
+                ? ` | ${card.description}`
+                : ` | ATK: ${card.attack} | HP: ${card.health}`}
+            </div>
           </div>
         ))}
       </div>

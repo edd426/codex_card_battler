@@ -8,5 +8,20 @@
     "id": "taunt",
     "name": "Taunt",
     "description": "Opponents must target this unit before others."
+  },
+  {
+    "id": "spell",
+    "name": "Spell",
+    "description": "One-time effect card."
+  },
+  {
+    "id": "lifesteal",
+    "name": "Lifesteal",
+    "description": "This unit heals your hero for damage dealt."
+  },
+  {
+    "id": "divineShield",
+    "name": "Divine Shield",
+    "description": "This unit ignores the first damage it takes."
   }
 ]

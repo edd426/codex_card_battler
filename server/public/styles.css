@@ -4,7 +4,9 @@ body {
 }
 
 .app {
-  max-width: 600px;
+  /* Use a fluid width for wider screens while capping at a reasonable max */
+  width: 90%;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -65,10 +67,12 @@ body {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 20px;
+  /* Allow board sections to stretch evenly on wider screens */
+  flex-wrap: wrap;
 }
 
 .board-section {
-  flex: 1;
+  flex: 1 1 45%;
   border: 2px solid #777;
   border-radius: 4px;
   padding: 10px;
@@ -154,6 +158,9 @@ body {
   margin-bottom: 10px;
 }
 /* Status badges on cards */
+.status.spell {
+  background-color: #ba68c8;
+}
 .status {
   display: inline-block;
   margin-left: 4px;
@@ -168,4 +175,12 @@ body {
 }
 .status.taunt {
   background-color: #aed581;
+}
+/* Lifesteal: heals hero for damage dealt */
+.status.lifesteal {
+  background-color: #e57373;
+}
+/* Divine Shield: ignores first damage */
+.status.divineShield {
+  background-color: #64b5f6;
 }

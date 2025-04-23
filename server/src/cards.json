@@ -6,10 +6,35 @@
   { "id": 5, "name": "Giant", "attack": 5, "health": 8, "manaCost": 7, "image": null },
   { "id": 6, "name": "Rogue", "attack": 3, "health": 2, "manaCost": 3, "image": null, "charge": true  },
   { "id": 7, "name": "Goblin", "attack": 1, "health": 1, "manaCost": 1, "image": null },
-  { "id": 8, "name": "Shieldbearer", "attack": 1, "health": 4, "manaCost": 2, "image": null, "taunt": true },
+  {
+    "id": 8,
+    "name": "Shieldbearer",
+    "attack": 1,
+    "health": 4,
+    "manaCost": 2,
+    "image": null,
+    "taunt": true,
+    "divineShield": true
+  },
   { "id": 9, "name": "Berserker", "attack": 3, "health": 3, "manaCost": 3, "image": null },
-  { "id": 10, "name": "Priest", "attack": 1, "health": 3, "manaCost": 2, "image": null },
-  { "id": 11, "name": "Warlock", "attack": 4, "health": 4, "manaCost": 5, "image": null },
+  {
+    "id": 10,
+    "name": "Priest",
+    "attack": 1,
+    "health": 3,
+    "manaCost": 2,
+    "image": null,
+    "lifesteal": true
+  },
+  {
+    "id": 11,
+    "name": "Warlock",
+    "attack": 4,
+    "health": 4,
+    "manaCost": 5,
+    "image": null,
+    "lifesteal": true
+  },
   { "id": 12, "name": "Demon", "attack": 5, "health": 5, "manaCost": 6, "image": null },
   { "id": 13, "name": "Dragon", "attack": 6, "health": 6, "manaCost": 7, "image": null },
   { "id": 14, "name": "Skeleton", "attack": 1, "health": 1, "manaCost": 1, "image": null },
@@ -23,10 +48,38 @@
   { "id": 22, "name": "Monk", "attack": 2, "health": 4, "manaCost": 2, "image": null },
   { "id": 23, "name": "Beastmaster", "attack": 3, "health": 3, "manaCost": 3, "image": null },
   { "id": 24, "name": "Assault Trooper", "attack": 4, "health": 4, "manaCost": 4, "image": null, "charge": true },
-  { "id": 25, "name": "Defender", "attack": 2, "health": 6, "manaCost": 3, "image": null, "taunt": true },
+  {
+    "id": 25,
+    "name": "Defender",
+    "attack": 2,
+    "health": 6,
+    "manaCost": 3,
+    "image": null,
+    "taunt": true,
+    "divineShield": true
+  },
   { "id": 26, "name": "Sorcerer", "attack": 4, "health": 3, "manaCost": 4, "image": null },
   { "id": 27, "name": "Warlord", "attack": 6, "health": 6, "manaCost": 8, "image": null },
   { "id": 28, "name": "Titan", "attack": 8, "health": 8, "manaCost": 10, "image": null },
   { "id": 29, "name": "Spirit", "attack": 2, "health": 2, "manaCost": 1, "image": null },
   { "id": 30, "name": "Elemental Lord", "attack": 7, "health": 7, "manaCost": 9, "image": null }
+  ,
+  {
+    "id": 31,
+    "name": "Fireball",
+    "manaCost": 4,
+    "image": null,
+    "spell": true,
+    "description": "Deal 6 damage to the enemy hero",
+    "effect": { "target": "aiHero", "amount": 6 }
+  },
+  {
+    "id": 32,
+    "name": "Healing Touch",
+    "manaCost": 3,
+    "image": null,
+    "spell": true,
+    "description": "Restore 5 health to your hero",
+    "effect": { "target": "userHero", "amount": 5 }
+  }
 ]

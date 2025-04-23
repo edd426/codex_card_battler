@@ -1,4 +1,6 @@
 const MAX_MANA = 10;
+// Chance for AI to attack non-taunt minions when no taunt present
+const AI_ATTACK_MINION_PROBABILITY = 0.3;
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -191,15 +193,37 @@ class Game {
           continue;
         }
       } else {
-        // No taunt, attack hero
-        this.userHealth -= creature.attack;
-        creature.hasAttacked = true;
-        this.logEvent(`${creature.name} attacks you for ${creature.attack}`);
-        if (this.userHealth <= 0) {
-          this.over = true;
-          this.winner = 'ai';
-          this.logEvent(`You die. AI wins!`);
-          return;
+        // No taunt. Sometimes attack other creatures, otherwise attack hero
+        const nonTauntTargets = this.userBoard;
+        if (nonTauntTargets.length > 0 && Math.random() < AI_ATTACK_MINION_PROBABILITY) {
+          // Attack a random creature
+          const target = nonTauntTargets[Math.floor(Math.random() * nonTauntTargets.length)];
+          target.currentHealth -= creature.attack;
+          this.logEvent(`${creature.name} attacks ${target.name} for ${creature.attack}`);
+          // Retaliation
+          creature.currentHealth -= target.attack;
+          this.logEvent(`${target.name} retaliates for ${target.attack}`);
+          creature.hasAttacked = true;
+          // Remove dead creatures
+          if (target.currentHealth <= 0) {
+            this.userBoard = this.userBoard.filter(c => c !== target);
+            this.logEvent(`${target.name} dies`);
+          }
+          if (creature.currentHealth <= 0) {
+            this.aiBoard = this.aiBoard.filter(c => c !== creature);
+            this.logEvent(`${creature.name} dies`);
+          }
+        } else {
+          // Attack hero
+          this.userHealth -= creature.attack;
+          creature.hasAttacked = true;
+          this.logEvent(`${creature.name} attacks you for ${creature.attack}`);
+          if (this.userHealth <= 0) {
+            this.over = true;
+            this.winner = 'ai';
+            this.logEvent(`You die. AI wins!`);
+            return;
+          }
         }
       }
     }
