@@ -1,6 +1,5 @@
-const MAX_MANA = 10;
-// Chance for AI to attack non-taunt minions when no taunt present
-const AI_ATTACK_MINION_PROBABILITY = 0.3;
+const { maxMana: MAX_MANA, aiAttackMinionProbability: AI_ATTACK_MINION_PROBABILITY } = require('./config');
+
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -51,42 +50,62 @@ class Game {
     if (card.manaCost > this.currentUserMana) throw new Error('Not enough mana');
     this.userHand.splice(idx, 1);
     this.currentUserMana -= card.manaCost;
-    // Create creature instance, track summoning sickness and attack status
+    if (card.spell) {
+      this.logEvent(`You cast ${card.name} (Cost ${card.manaCost})`);
+      const { effect } = card;
+      if (effect) {
+        if (effect.target === 'aiHero') {
+          const dmg = effect.amount;
+          this.aiHealth -= dmg;
+          this.logEvent(`${card.name} deals ${dmg} damage to AI hero`);
+          if (this.aiHealth <= 0) {
+            this.over = true;
+            this.winner = 'user';
+            this.logEvent(`AI hero dies. You win!`);
+          }
+        } else if (effect.target === 'userHero') {
+          const heal = effect.amount;
+          this.userHealth = Math.min(20, this.userHealth + heal);
+          this.logEvent(`${card.name} heals you for ${heal}`);
+        }
+      }
+      return;
+    }
     const creature = {
       ...card,
       currentHealth: card.health,
       hasAttacked: false,
-      // creatures cannot attack on the turn they are summoned unless they have Charge
-      summonedThisTurn: true
+      summonedThisTurn: true,
+      lifesteal: !!card.lifesteal,
+      divineShield: !!card.divineShield,
     };
     this.userBoard.push(creature);
     this.logEvent(`You play ${card.name} (Cost ${card.manaCost})`);
   }
-  /**
-   * Perform an attack from a user creature to a target (hero or creature)
-   */
+
   attack(attackerId, targetType, targetId) {
     if (this.over) throw new Error('Game is already over');
     if (this.turn !== 'user') throw new Error('Not your turn');
     const attacker = this.userBoard.find(c => c.id === attackerId);
     if (!attacker) throw new Error('Attacking creature not found');
     if (attacker.hasAttacked) throw new Error('Creature has already attacked');
-    // Summoning sickness: cannot attack the turn summoned unless has Charge
     if (attacker.summonedThisTurn && !attacker.charge) {
       throw new Error(`${attacker.name} cannot attack until next turn`);
     }
-    // Taunt: must attack taunt creatures first
     const taunts = this.aiBoard.filter(c => c.taunt);
     if (taunts.length > 0) {
-      // if attacking hero or a non-taunt creature, block
       if (targetType === 'hero' || (targetType === 'creature' && !taunts.some(c => c.id === targetId))) {
         throw new Error('Must attack taunt creatures first');
       }
     }
-    // Attack hero
     if (targetType === 'hero') {
-      this.aiHealth -= attacker.attack;
-      this.logEvent(`${attacker.name} attacks AI hero for ${attacker.attack}`);
+      const dmg = attacker.attack;
+      this.aiHealth -= dmg;
+      this.logEvent(`${attacker.name} attacks AI hero for ${dmg}`);
+      if (attacker.lifesteal && dmg > 0) {
+        this.userHealth = Math.min(20, this.userHealth + dmg);
+        this.logEvent(`You heal for ${dmg}`);
+      }
       attacker.hasAttacked = true;
       if (this.aiHealth <= 0) {
         this.over = true;
@@ -95,18 +114,36 @@ class Game {
       }
       return;
     }
-    // Attack another creature
     if (targetType === 'creature') {
       const target = this.aiBoard.find(c => c.id === targetId);
       if (!target) throw new Error('Target creature not found');
-      // Deal damage
-      target.currentHealth -= attacker.attack;
-      this.logEvent(`${attacker.name} attacks ${target.name} for ${attacker.attack}`);
-      // Retaliation
-      attacker.currentHealth -= target.attack;
-      this.logEvent(`${target.name} retaliates for ${target.attack}`);
+      let dealt = attacker.attack;
+      if (target.divineShield) {
+        target.divineShield = false;
+        dealt = 0;
+        this.logEvent(`${target.name}'s Divine Shield absorbs the attack`);
+      } else {
+        target.currentHealth -= dealt;
+        this.logEvent(`${attacker.name} attacks ${target.name} for ${dealt}`);
+      }
+      if (attacker.lifesteal && dealt > 0) {
+        this.userHealth = Math.min(20, this.userHealth + dealt);
+        this.logEvent(`You heal for ${dealt}`);
+      }
+      let ret = target.attack;
+      if (attacker.divineShield) {
+        attacker.divineShield = false;
+        ret = 0;
+        this.logEvent(`${attacker.name}'s Divine Shield absorbs the retaliatory damage`);
+      } else {
+        attacker.currentHealth -= ret;
+        this.logEvent(`${target.name} retaliates for ${ret}`);
+      }
+      if (target.lifesteal && ret > 0) {
+        this.aiHealth = Math.min(20, this.aiHealth + ret);
+        this.logEvent(`AI heals for ${ret}`);
+      }
       attacker.hasAttacked = true;
-      // Remove dead creatures
       if (target.currentHealth <= 0) {
         this.aiBoard = this.aiBoard.filter(c => c !== target);
         this.logEvent(`${target.name} dies`);
@@ -124,13 +161,17 @@ class Game {
     if (this.over) throw new Error('Game is already over');
     if (this.turn !== 'user') throw new Error('Not your turn');
 
-    // User creatures attack AI hero (skip those that attacked or have summoning sickness)
     for (const creature of this.userBoard) {
       if (creature.hasAttacked) continue;
       if (creature.summonedThisTurn && !creature.charge) continue;
-      this.aiHealth -= creature.attack;
+      const dealt = creature.attack;
+      this.aiHealth -= dealt;
+      this.logEvent(`${creature.name} attacks AI hero for ${dealt}`);
+      if (creature.lifesteal && dealt > 0) {
+        this.userHealth = Math.min(20, this.userHealth + dealt);
+        this.logEvent(`You heal for ${dealt}`);
+      }
       creature.hasAttacked = true;
-      this.logEvent(`${creature.name} attacks AI hero for ${creature.attack}`);
       if (this.aiHealth <= 0) {
         this.over = true;
         this.winner = 'user';
@@ -139,9 +180,7 @@ class Game {
       }
     }
 
-    // AI turn begins
     this.turn = 'ai';
-    // Refill AI mana and draw
     this.maxAiMana = Math.min(MAX_MANA, this.maxAiMana + 1);
     this.currentAiMana = this.maxAiMana;
     const drawnAi = this.draw(1);
@@ -149,40 +188,81 @@ class Game {
       this.aiHand.push(...drawnAi);
       this.logEvent(`AI draws a card`);
     }
-    // AI plays creatures, tracking summon status and attack flags
-    let playable = true;
-    while (playable) {
+
+    while (true) {
       const affordable = this.aiHand.filter(c => c.manaCost <= this.currentAiMana);
-      if (affordable.length === 0) break;
+      if (!affordable.length) break;
       affordable.sort((a, b) => a.manaCost - b.manaCost);
       const card = affordable[0];
       const idx2 = this.aiHand.findIndex(c => c.id === card.id);
       this.aiHand.splice(idx2, 1);
       this.currentAiMana -= card.manaCost;
+      if (card.spell) {
+        this.logEvent(`AI casts ${card.name} (Cost ${card.manaCost})`);
+        const effect = card.effect;
+        if (effect) {
+          if (effect.target === 'userHero') {
+            const dmg = effect.amount;
+            this.userHealth -= dmg;
+            this.logEvent(`${card.name} deals ${dmg} damage to you`);
+            if (this.userHealth <= 0) {
+              this.over = true;
+              this.winner = 'ai';
+              this.logEvent(`You die. AI wins!`);
+            }
+          } else if (effect.target === 'aiHero') {
+            const heal = effect.amount;
+            this.aiHealth = Math.min(20, this.aiHealth + heal);
+            this.logEvent(`${card.name} heals AI for ${heal}`);
+          }
+        }
+        continue;
+      }
       const creature = {
         ...card,
         currentHealth: card.health,
         hasAttacked: false,
-        summonedThisTurn: true
+        summonedThisTurn: true,
+        lifesteal: !!card.lifesteal,
+        divineShield: !!card.divineShield,
       };
       this.aiBoard.push(creature);
       this.logEvent(`AI plays ${card.name} (Cost ${card.manaCost})`);
     }
-    // AI creatures attack (respecting Charge and summoning sickness) – prefer hitting taunt creatures
+
     for (const creature of [...this.aiBoard]) {
       if (creature.hasAttacked) continue;
       if (creature.summonedThisTurn && !creature.charge) continue;
       const tauntTargets = this.userBoard.filter(c => c.taunt);
       if (tauntTargets.length > 0) {
-        // Attack a taunt creature first
         const target = tauntTargets[0];
-        target.currentHealth -= creature.attack;
-        this.logEvent(`${creature.name} attacks ${target.name} for ${creature.attack}`);
-        // Retaliation
-        creature.currentHealth -= target.attack;
-        this.logEvent(`${target.name} retaliates for ${target.attack}`);
+        let dealt = creature.attack;
+        if (target.divineShield) {
+          target.divineShield = false;
+          dealt = 0;
+          this.logEvent(`${target.name}'s Divine Shield absorbs the attack`);
+        } else {
+          target.currentHealth -= dealt;
+          this.logEvent(`${creature.name} attacks ${target.name} for ${dealt}`);
+        }
+        if (creature.lifesteal && dealt > 0) {
+          this.aiHealth = Math.min(20, this.aiHealth + dealt);
+          this.logEvent(`AI heals for ${dealt}`);
+        }
+        let ret = target.attack;
+        if (creature.divineShield) {
+          creature.divineShield = false;
+          ret = 0;
+          this.logEvent(`${creature.name}'s Divine Shield absorbs the retaliatory damage`);
+        } else {
+          creature.currentHealth -= ret;
+          this.logEvent(`${target.name} retaliates for ${ret}`);
+        }
+        if (target.lifesteal && ret > 0) {
+          this.userHealth = Math.min(20, this.userHealth + ret);
+          this.logEvent(`You heal for ${ret}`);
+        }
         creature.hasAttacked = true;
-        // Remove dead creatures
         if (target.currentHealth <= 0) {
           this.userBoard = this.userBoard.filter(c => c !== target);
           this.logEvent(`${target.name} dies`);
@@ -193,18 +273,35 @@ class Game {
           continue;
         }
       } else {
-        // No taunt. Sometimes attack other creatures, otherwise attack hero
-        const nonTauntTargets = this.userBoard;
-        if (nonTauntTargets.length > 0 && Math.random() < AI_ATTACK_MINION_PROBABILITY) {
-          // Attack a random creature
-          const target = nonTauntTargets[Math.floor(Math.random() * nonTauntTargets.length)];
-          target.currentHealth -= creature.attack;
-          this.logEvent(`${creature.name} attacks ${target.name} for ${creature.attack}`);
-          // Retaliation
-          creature.currentHealth -= target.attack;
-          this.logEvent(`${target.name} retaliates for ${target.attack}`);
+        if (this.userBoard.length > 0 && Math.random() < AI_ATTACK_MINION_PROBABILITY) {
+          const target = this.userBoard[Math.floor(Math.random() * this.userBoard.length)];
+          let dealt = creature.attack;
+          if (target.divineShield) {
+            target.divineShield = false;
+            dealt = 0;
+            this.logEvent(`${target.name}'s Divine Shield absorbs the attack`);
+          } else {
+            target.currentHealth -= dealt;
+            this.logEvent(`${creature.name} attacks ${target.name} for ${dealt}`);
+          }
+          if (creature.lifesteal && dealt > 0) {
+            this.aiHealth = Math.min(20, this.aiHealth + dealt);
+            this.logEvent(`AI heals for ${dealt}`);
+          }
+          let ret = target.attack;
+          if (creature.divineShield) {
+            creature.divineShield = false;
+            ret = 0;
+            this.logEvent(`${creature.name}'s Divine Shield absorbs the retaliatory damage`);
+          } else {
+            creature.currentHealth -= ret;
+            this.logEvent(`${target.name} retaliates for ${ret}`);
+          }
+          if (target.lifesteal && ret > 0) {
+            this.userHealth = Math.min(20, this.userHealth + ret);
+            this.logEvent(`You heal for ${ret}`);
+          }
           creature.hasAttacked = true;
-          // Remove dead creatures
           if (target.currentHealth <= 0) {
             this.userBoard = this.userBoard.filter(c => c !== target);
             this.logEvent(`${target.name} dies`);
@@ -214,10 +311,14 @@ class Game {
             this.logEvent(`${creature.name} dies`);
           }
         } else {
-          // Attack hero
-          this.userHealth -= creature.attack;
+          const dealt = creature.attack;
+          this.userHealth -= dealt;
+          this.logEvent(`${creature.name} attacks you for ${dealt}`);
+          if (creature.lifesteal && dealt > 0) {
+            this.aiHealth = Math.min(20, this.aiHealth + dealt);
+            this.logEvent(`AI heals for ${dealt}`);
+          }
           creature.hasAttacked = true;
-          this.logEvent(`${creature.name} attacks you for ${creature.attack}`);
           if (this.userHealth <= 0) {
             this.over = true;
             this.winner = 'ai';
@@ -228,7 +329,6 @@ class Game {
       }
     }
 
-    // Start next user turn
     this.turn = 'user';
     this.turnCount++;
     this.maxUserMana = Math.min(MAX_MANA, this.maxUserMana + 1);
@@ -239,7 +339,6 @@ class Game {
       this.logEvent(`You draw a card`);
     }
     this.logEvent(`Turn ${this.turnCount}: your turn. Mana: ${this.currentUserMana}/${this.maxUserMana}`);
-    // Reset attack status and clear summoning sickness for all creatures
     this.userBoard.forEach(c => {
       c.hasAttacked = false;
       c.summonedThisTurn = false;

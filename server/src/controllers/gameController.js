@@ -1,6 +1,6 @@
 const { randomUUID } = require('crypto');
 const cards = require('../cards.json');
-const { Game } = require('../models/game');
+const { Game } = require('../game');
 
 // In-memory store of active games
 const games = {};
