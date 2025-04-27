@@ -345,6 +345,36 @@ describe('Game class', () => {
         ])
       );
     });
+    test('Reborn minion summonedThisTurn flag is set when killed by player attack', () => {
+      const game = new Game(cards);
+      // Place a reborn creature in AI board
+      const skeletonDef = cards.find(c => c.id === 14);
+      const skeleton = {
+        ...skeletonDef,
+        currentHealth: skeletonDef.health,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        reborn: true,
+      };
+      game.aiBoard = [skeleton];
+      // Player attacker with charge to kill skeleton
+      const attacker = { id: 600, name: 'Att', attack: skeleton.attack + 1,
+        health: 3, currentHealth: 3, hasAttacked: false,
+        summonedThisTurn: false, charge: true };
+      game.userBoard = [attacker];
+      game.turn = 'user';
+      // Kill the skeleton via player attack
+      game.attack(attacker.id, 'creature', skeleton.id);
+      const state = game.getState();
+      // Should have skeleton revived on AI board with summonedThisTurn true
+      expect(state.aiBoard).toHaveLength(1);
+      const revived = state.aiBoard[0];
+      expect(revived.currentHealth).toBe(1);
+      expect(revived.reborn).toBe(false);
+      expect(revived.summonedThisTurn).toBe(true);
+      // Attacker has attacked; revived has not
+      expect(revived.hasAttacked).toBe(false);
+    });
   });
   });
 });

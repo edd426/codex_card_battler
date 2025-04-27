@@ -148,7 +148,7 @@ class Game {
             ...target,
             currentHealth: 1,
             hasAttacked: false,
-            summonedThisTurn: false,
+            summonedThisTurn: true,
             reborn: false,
           };
           this.aiBoard.push(revived);
@@ -167,7 +167,7 @@ class Game {
             ...attacker,
             currentHealth: 1,
             hasAttacked: false,
-            summonedThisTurn: false,
+            summonedThisTurn: true,
             reborn: false,
           };
           this.userBoard.push(revivedAtt);
