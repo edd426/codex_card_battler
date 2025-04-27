@@ -173,7 +173,9 @@ function App() {
                 >
                   {/* Cost badge */}
                   <span className="card-cost">{card.manaCost}</span>
-                  {/* Card name and statuses */}
+              {/* Card image */}
+              {card.image && <img src={card.image} alt={card.name} />}
+              {/* Card name and statuses */}
                   <div className="card-title">
                     {card.name}
                     {statuses.filter(s => card[s.id]).map(s => (
@@ -220,7 +222,6 @@ function App() {
               {/* Cost badge */}
               <span className="card-cost">{card.manaCost}</span>
               {/* Card image */}
-              {card.image && <img src={card.image} alt={card.name} />}
               {card.image && <img src={card.image} alt={card.name} />}
               {/* Card title and statuses */}
               <div className="card-title">
