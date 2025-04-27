@@ -1,17 +1,28 @@
 const { createGame, getGame, deleteGame } = require('../services/gameService');
 
-// Base path for card images
+// Base URL path for card images
 const CARD_IMAGE_PATH = '/images/cards/';
+// Base filesystem directory for card images
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Enriches game state card arrays with image URLs based on card IDs
  */
 function enrichStateWithImages(state) {
+  // Directory where card images are stored on disk
+  const cardsDir = path.join(__dirname, '..', '..', 'public', 'images', 'cards');
   ['userHand', 'userBoard', 'aiBoard'].forEach(key => {
     if (Array.isArray(state[key])) {
       state[key].forEach(card => {
-        // Use generated PNG art files
-        card.image = `${CARD_IMAGE_PATH}${card.id}.png`;
+        // Prefer PNG if exists, otherwise fall back to SVG placeholder
+        const pngName = `${card.id}.png`;
+        const svgName = `${card.id}.svg`;
+        if (fs.existsSync(path.join(cardsDir, pngName))) {
+          card.image = `${CARD_IMAGE_PATH}${pngName}`;
+        } else {
+          card.image = `${CARD_IMAGE_PATH}${svgName}`;
+        }
       });
     }
   });
