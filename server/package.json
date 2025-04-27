@@ -7,7 +7,8 @@
     "start": "node src/index.js",
     "test": "jest --detectOpenHandles",
     "rarity": "node scripts/calcRarity.js",
-    "simulate": "node scripts/simulate.js"
+    "simulate": "node scripts/simulate.js",
+    "gen-art": "node scripts/generatePlaceholders.js"
   },
   "dependencies": {
     "express": "^4.18.2",
