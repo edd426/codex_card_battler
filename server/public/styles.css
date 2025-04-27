@@ -180,6 +180,10 @@ body {
 .status.lifesteal {
   background-color: #e57373;
 }
+/* Reborn: returns with 1 HP upon death */
+.status.reborn {
+  background-color: #ffb74d;
+}
 /* Divine Shield: ignores first damage */
 .status.divineShield {
   background-color: #64b5f6;

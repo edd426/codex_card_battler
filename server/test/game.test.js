@@ -251,5 +251,52 @@ describe('Game class', () => {
       // Check that no draw logs were added
       expect(game.log.every(e => !/draws a card/.test(e))).toBe(true);
     });
+  
+  describe('Reborn ability', () => {
+    test('Reborn minion resurrects with 1 health and loses reborn flag', () => {
+      const game = new Game(cards);
+      // Set up AI board with a reborn minion
+      const rebornMinion = {
+        id: 500,
+        name: 'TestReborn',
+        attack: 2,
+        health: 4,
+        manaCost: 0,
+        currentHealth: 4,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        reborn: true
+      };
+      game.aiBoard = [rebornMinion];
+      // Set up user attacker
+      const attacker = {
+        id: 501,
+        name: 'Attacker',
+        attack: 5,
+        health: 3,
+        currentHealth: 3,
+        hasAttacked: false,
+        summonedThisTurn: false
+      };
+      game.userBoard = [attacker];
+      game.turn = 'user';
+      // Attack and kill the reborn minion
+      game.attack(attacker.id, 'creature', rebornMinion.id);
+      const state = game.getState();
+      // Should have exactly one minion on AI board
+      expect(state.aiBoard).toHaveLength(1);
+      const revived = state.aiBoard[0];
+      // Revived with 1 health and reborn flag removed
+      expect(revived.currentHealth).toBe(1);
+      expect(revived.reborn).toBe(false);
+      // Logs should include death and reborn messages
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          'TestReborn dies',
+          'TestReborn is reborn!'
+        ])
+      );
+    });
+  });
   });
 });

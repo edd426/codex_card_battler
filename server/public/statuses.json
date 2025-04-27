@@ -24,4 +24,10 @@
     "name": "Divine Shield",
     "description": "This unit ignores the first damage it takes."
   }
+  ,
+  {
+    "id": "reborn",
+    "name": "Reborn",
+    "description": "When this unit dies, it returns to life with 1 health."
+  }
 ]
