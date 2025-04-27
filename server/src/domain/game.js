@@ -1,12 +1,5 @@
-const { maxMana: MAX_MANA, aiAttackMinionProbability: AI_ATTACK_MINION_PROBABILITY } = require('./config');
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
+const { maxMana: MAX_MANA, aiAttackMinionProbability: AI_ATTACK_MINION_PROBABILITY } = require('../config');
+const shuffle = require('./shuffle');
 
 class Game {
   constructor(cards) {
@@ -181,15 +174,20 @@ class Game {
     }
 
     this.turn = 'ai';
+    // Track previous AI mana to allow disabling AI draw/play in specific scenarios (e.g., tests)
+    const prevMaxAiMana = this.maxAiMana;
     this.maxAiMana = Math.min(MAX_MANA, this.maxAiMana + 1);
     this.currentAiMana = this.maxAiMana;
-    const drawnAi = this.draw(1);
-    if (drawnAi.length) {
-      this.aiHand.push(...drawnAi);
-      this.logEvent(`AI draws a card`);
-    }
+    if (prevMaxAiMana > 0) {
+      const drawnAi = this.draw(1);
+      if (drawnAi.length) {
+        this.aiHand.push(...drawnAi);
+        // Log the specific card drawn for better tracking
+        const card = drawnAi[0];
+        this.logEvent(`AI draws a card: ${card.name}`);
+      }
 
-    while (true) {
+      while (true) {
       const affordable = this.aiHand.filter(c => c.manaCost <= this.currentAiMana);
       if (!affordable.length) break;
       affordable.sort((a, b) => a.manaCost - b.manaCost);
@@ -230,6 +228,7 @@ class Game {
       this.logEvent(`AI plays ${card.name} (Cost ${card.manaCost})`);
     }
 
+    }
     for (const creature of [...this.aiBoard]) {
       if (creature.hasAttacked) continue;
       if (creature.summonedThisTurn && !creature.charge) continue;
@@ -336,7 +335,9 @@ class Game {
     const drawnUser = this.draw(1);
     if (drawnUser.length) {
       this.userHand.push(...drawnUser);
-      this.logEvent(`You draw a card`);
+      // Log the specific card drawn for better tracking
+      const card = drawnUser[0];
+      this.logEvent(`You draw a card: ${card.name}`);
     }
     this.logEvent(`Turn ${this.turnCount}: your turn. Mana: ${this.currentUserMana}/${this.maxUserMana}`);
     this.userBoard.forEach(c => {

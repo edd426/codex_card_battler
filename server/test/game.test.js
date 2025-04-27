@@ -1,4 +1,4 @@
-const { Game } = require('../src/game');
+const { Game } = require('../src/domain/game');
 const cards = require('../src/cards.json');
 
 describe('Game class', () => {
@@ -110,5 +110,146 @@ describe('Game class', () => {
     expect(state.aiBoard).toHaveLength(1);
     expect(state.aiBoard[0].id).toBe(1000);
     expect(state.aiBoard[0].currentHealth).toBe(2);
+  });
+  
+  describe('Spell cards', () => {
+    test('Fireball deals damage to AI hero and can win the game', () => {
+      const game = new Game(cards);
+      // Set AI health low enough for lethal
+      game.aiHealth = 4;
+      // Override hand to contain only Fireball (id 31)
+      const fireball = cards.find(c => c.id === 31);
+      game.userHand = [{ ...fireball }];
+      game.currentUserMana = fireball.manaCost;
+      game.maxUserMana = fireball.manaCost;
+      game.log = [];
+      game.playCard(fireball.id);
+      const state = game.getState();
+      expect(state.aiHealth).toBe(4 - fireball.effect.amount);
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          `You cast ${fireball.name} (Cost ${fireball.manaCost})`,
+          `${fireball.name} deals ${fireball.effect.amount} damage to AI hero`,
+          `AI hero dies. You win!`
+        ])
+      );
+      expect(state.over).toBe(true);
+      expect(state.winner).toBe('user');
+    });
+
+    test('Healing Touch heals the user hero up to maximum health', () => {
+      const game = new Game(cards);
+      game.userHealth = 17;
+      const heal = cards.find(c => c.id === 32);
+      game.userHand = [{ ...heal }];
+      game.currentUserMana = heal.manaCost;
+      game.maxUserMana = heal.manaCost;
+      game.log = [];
+      game.playCard(heal.id);
+      const state = game.getState();
+      expect(state.userHealth).toBe(20);
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          `You cast ${heal.name} (Cost ${heal.manaCost})`,
+          `${heal.name} heals you for ${heal.effect.amount}`
+        ])
+      );
+      expect(state.over).toBe(false);
+    });
+  });
+
+  describe('Lifesteal and Divine Shield edge cases', () => {
+    test('Lifesteal heals user hero when attacking AI hero', () => {
+      const game = new Game(cards);
+      game.userHealth = 10;
+      // Prepare a lifesteal creature on board
+      const lifestealMinion = {
+        id: 999,
+        name: 'LS Minion',
+        attack: 3,
+        health: 2,
+        currentHealth: 2,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        lifesteal: true,
+        divineShield: false
+      };
+      game.userBoard = [lifestealMinion];
+      game.turn = 'user';
+      game.attack(lifestealMinion.id, 'hero', null);
+      const state = game.getState();
+      expect(state.aiHealth).toBe(20 - lifestealMinion.attack);
+      expect(state.userHealth).toBe(10 + lifestealMinion.attack);
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          `${lifestealMinion.name} attacks AI hero for ${lifestealMinion.attack}`,
+          `You heal for ${lifestealMinion.attack}`
+        ])
+      );
+    });
+
+    test('Divine Shield absorbs first damage from an attack', () => {
+      const game = new Game(cards);
+      // Prepare attacker and a divine shield creature
+      const attacker = {
+        id: 1000,
+        name: 'Attacker',
+        attack: 2,
+        health: 3,
+        currentHealth: 3,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        lifesteal: false,
+        divineShield: false
+      };
+      const shieldMinion = {
+        id: 1001,
+        name: 'Shielded',
+        attack: 1,
+        health: 2,
+        currentHealth: 2,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        lifesteal: false,
+        divineShield: true
+      };
+      game.userBoard = [attacker];
+      game.aiBoard = [shieldMinion];
+      game.turn = 'user';
+      game.attack(attacker.id, 'creature', shieldMinion.id);
+      const state = game.getState();
+      const target = state.aiBoard.find(c => c.id === shieldMinion.id);
+      expect(target).toBeDefined();
+      expect(target.divineShield).toBe(false);
+      expect(target.currentHealth).toBe(shieldMinion.health);
+      // Attacker should take retaliatory damage
+      const usrAtt = state.userBoard.find(c => c.id === attacker.id);
+      expect(usrAtt.currentHealth).toBe(attacker.health - shieldMinion.attack);
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          `${shieldMinion.name}'s Divine Shield absorbs the attack`,
+          `${shieldMinion.name} retaliates for ${shieldMinion.attack}`
+        ])
+      );
+    });
+  });
+
+  describe('Deck exhaustion', () => {
+    test('draw returns empty array when deck is empty', () => {
+      const game = new Game(cards);
+      game.deck = [];
+      const drawn = game.draw(3);
+      expect(drawn).toEqual([]);
+    });
+
+    test('endTurn does not throw when deck is empty and no draw events', () => {
+      const game = new Game(cards);
+      game.deck = [];
+      game.log = [];
+      // Ensure no errors
+      expect(() => game.endTurn()).not.toThrow();
+      // Check that no draw logs were added
+      expect(game.log.every(e => !/draws a card/.test(e))).toBe(true);
+    });
   });
 });
