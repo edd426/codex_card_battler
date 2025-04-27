@@ -92,3 +92,25 @@ Based on card names alone, these are the estimated rarities for reference:
 | 30 | Elemental Lord   | Legendary        |
 | 31 | Fireball         | Rare             |
 | 32 | Healing Touch    | Rare             |
+## Art Generation
+
+This project supports generating card art placeholders and realistic card images.
+
+1. Placeholder SVGs: in the server directory, run:
+   ```bash
+   cd server
+   npm install
+   npm run gen-art
+   ```
+   This creates simple SVGs under `public/images/cards/<id>.svg`.
+
+2. Realistic PNGs via OpenAI Image API:
+   ```bash
+   cd server
+   npm install
+   export OPENAI_API_KEY=your_key_here
+   npm run gen-real-art
+   ```
+   This generates 512×512 PNGs under `public/images/cards/<id>.png`.
+
+Once images are generated, the server routes will include `card.image` URLs (pointing to the `.png` files) in the game state for easy UI integration.

@@ -10,7 +10,8 @@ function enrichStateWithImages(state) {
   ['userHand', 'userBoard', 'aiBoard'].forEach(key => {
     if (Array.isArray(state[key])) {
       state[key].forEach(card => {
-        card.image = `${CARD_IMAGE_PATH}${card.id}.svg`;
+        // Use generated PNG art files
+        card.image = `${CARD_IMAGE_PATH}${card.id}.png`;
       });
     }
   });
