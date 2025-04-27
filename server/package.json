@@ -8,7 +8,8 @@
     "test": "jest --detectOpenHandles",
     "rarity": "node scripts/calcRarity.js",
     "simulate": "node scripts/simulate.js",
-    "gen-art": "node scripts/generatePlaceholders.js"
+    "gen-art": "node scripts/generatePlaceholders.js",
+    "gen-real-art": "node scripts/generateArt.js"
   },
   "dependencies": {
     "express": "^4.18.2",
