@@ -25,12 +25,10 @@ const { Configuration, OpenAIApi } = require('openai');
         prompt,
         n: 1,
         size: '512x512',
-        response_format: 'url',
+        response_format: 'b64_json',
       });
-      const imageUrl = response.data.data[0].url;
-      const fetchRes = await fetch(imageUrl);
-      const arrayBuffer = await fetchRes.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      const b64 = response.data.data[0].b64_json;
+      const buffer = Buffer.from(b64, 'base64');
       const outPath = path.join(outDir, `${card.id}.png`);
       await fs.writeFile(outPath, buffer);
       console.log(`Saved art for card ${card.id} at ${outPath}`);
