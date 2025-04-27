@@ -156,7 +156,7 @@ function App() {
         <div className="board-section">
           <h3>AI Board</h3>
           <div className="board-cards">
-            {aiBoard.map((card, idx) => {
+        {aiBoard.map((card, idx) => {
               // Build tooltip with full stats and abilities
               const abilityText = statuses
                 .filter(s => card[s.id])
@@ -219,6 +219,8 @@ function App() {
             >
               {/* Cost badge */}
               <span className="card-cost">{card.manaCost}</span>
+              {/* Card image */}
+              {card.image && <img src={card.image} alt={card.name} />}
               {card.image && <img src={card.image} alt={card.name} />}
               {/* Card title and statuses */}
               <div className="card-title">
