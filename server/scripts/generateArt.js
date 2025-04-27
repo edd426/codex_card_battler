@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 const fs = require('fs/promises');
 const path = require('path');
-const { Configuration, OpenAIApi } = require('openai');
+// Use OpenAI v4 client
+const { OpenAI } = require('openai');
 
 (async () => {
   const cardsPath = path.join(__dirname, '../src/cards.json');
   const cardsData = await fs.readFile(cardsPath, 'utf8');
   const cards = JSON.parse(cardsData);
   const outDir = path.join(__dirname, '../public/images/cards');
-  const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
-  const openai = new OpenAIApi(configuration);
+  // Initialize OpenAI client
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   for (const card of cards) {
     // Build prompt based on card traits
     let prompt = `High-resolution digital painting of ${card.name} card character.`;
@@ -21,13 +22,14 @@ const { Configuration, OpenAIApi } = require('openai');
     prompt += ' Fantasy theme, card game art style.';
     console.log(`Generating art for [${card.id}] ${card.name}`);
     try {
-      const response = await openai.createImage({
+      // Generate image via OpenAI Images API (v4)
+      const imgResponse = await openai.images.generate({
         prompt,
         n: 1,
         size: '512x512',
         response_format: 'b64_json',
       });
-      const b64 = response.data.data[0].b64_json;
+      const b64 = imgResponse.data[0].b64_json;
       const buffer = Buffer.from(b64, 'base64');
       const outPath = path.join(outDir, `${card.id}.png`);
       await fs.writeFile(outPath, buffer);
