@@ -71,6 +71,7 @@ class Game {
       summonedThisTurn: true,
       lifesteal: !!card.lifesteal,
       divineShield: !!card.divineShield,
+      reborn: !!card.reborn,
     };
     this.userBoard.push(creature);
     this.logEvent(`You play ${card.name} (Cost ${card.manaCost})`);
@@ -138,12 +139,42 @@ class Game {
       }
       attacker.hasAttacked = true;
       if (target.currentHealth <= 0) {
-        this.aiBoard = this.aiBoard.filter(c => c !== target);
-        this.logEvent(`${target.name} dies`);
+        // Death and Reborn handling for AI minion
+        if (target.reborn) {
+          this.aiBoard = this.aiBoard.filter(c => c !== target);
+          this.logEvent(`${target.name} dies`);
+          this.logEvent(`${target.name} is reborn!`);
+          const revived = {
+            ...target,
+            currentHealth: 1,
+            hasAttacked: false,
+            summonedThisTurn: false,
+            reborn: false,
+          };
+          this.aiBoard.push(revived);
+        } else {
+          this.aiBoard = this.aiBoard.filter(c => c !== target);
+          this.logEvent(`${target.name} dies`);
+        }
       }
       if (attacker.currentHealth <= 0) {
-        this.userBoard = this.userBoard.filter(c => c !== attacker);
-        this.logEvent(`${attacker.name} dies`);
+        // Death and Reborn handling for user's minion
+        if (attacker.reborn) {
+          this.userBoard = this.userBoard.filter(c => c !== attacker);
+          this.logEvent(`${attacker.name} dies`);
+          this.logEvent(`${attacker.name} is reborn!`);
+          const revivedAtt = {
+            ...attacker,
+            currentHealth: 1,
+            hasAttacked: false,
+            summonedThisTurn: false,
+            reborn: false,
+          };
+          this.userBoard.push(revivedAtt);
+        } else {
+          this.userBoard = this.userBoard.filter(c => c !== attacker);
+          this.logEvent(`${attacker.name} dies`);
+        }
       }
       return;
     }
@@ -223,6 +254,7 @@ class Game {
         summonedThisTurn: true,
         lifesteal: !!card.lifesteal,
         divineShield: !!card.divineShield,
+        reborn: !!card.reborn,
       };
       this.aiBoard.push(creature);
       this.logEvent(`AI plays ${card.name} (Cost ${card.manaCost})`);
@@ -263,8 +295,23 @@ class Game {
         }
         creature.hasAttacked = true;
         if (target.currentHealth <= 0) {
-          this.userBoard = this.userBoard.filter(c => c !== target);
-          this.logEvent(`${target.name} dies`);
+          // Death and Reborn handling for user's minion
+          if (target.reborn) {
+            this.userBoard = this.userBoard.filter(c => c !== target);
+            this.logEvent(`${target.name} dies`);
+            this.logEvent(`${target.name} is reborn!`);
+            const revived = {
+              ...target,
+              currentHealth: 1,
+              hasAttacked: false,
+              summonedThisTurn: false,
+              reborn: false,
+            };
+            this.userBoard.push(revived);
+          } else {
+            this.userBoard = this.userBoard.filter(c => c !== target);
+            this.logEvent(`${target.name} dies`);
+          }
         }
         if (creature.currentHealth <= 0) {
           this.aiBoard = this.aiBoard.filter(c => c !== creature);
@@ -302,8 +349,23 @@ class Game {
           }
           creature.hasAttacked = true;
           if (target.currentHealth <= 0) {
-            this.userBoard = this.userBoard.filter(c => c !== target);
-            this.logEvent(`${target.name} dies`);
+            // Death and Reborn handling for user's minion
+            if (target.reborn) {
+              this.userBoard = this.userBoard.filter(c => c !== target);
+              this.logEvent(`${target.name} dies`);
+              this.logEvent(`${target.name} is reborn!`);
+              const revived2 = {
+                ...target,
+                currentHealth: 1,
+                hasAttacked: false,
+                summonedThisTurn: false,
+                reborn: false,
+              };
+              this.userBoard.push(revived2);
+            } else {
+              this.userBoard = this.userBoard.filter(c => c !== target);
+              this.logEvent(`${target.name} dies`);
+            }
           }
           if (creature.currentHealth <= 0) {
             this.aiBoard = this.aiBoard.filter(c => c !== creature);

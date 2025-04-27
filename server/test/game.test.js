@@ -297,6 +297,54 @@ describe('Game class', () => {
         ])
       );
     });
+    test('Reborn activates when AI kills a reborn minion during endTurn', () => {
+      const game = new Game(cards);
+      // Set up a reborn skeleton on user board
+      const cardDef = cards.find(c => c.id === 14);
+      const skeleton = {
+        ...cardDef,
+        currentHealth: cardDef.health,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        reborn: true,
+      };
+      game.userBoard = [skeleton];
+      // Set up AI attacker with charge to guarantee immediate attack
+      const aiAttacker = {
+        id: 999,
+        name: 'AIWarrior',
+        attack: skeleton.attack + 1,
+        health: 2,
+        currentHealth: 2,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        charge: true
+      };
+      game.aiBoard = [aiAttacker];
+      // Prepare for endTurn: user turn
+      game.turn = 'user';
+      // Prevent AI draw/play
+      game.maxAiMana = 0;
+      game.currentAiMana = 0;
+      game.log = [];
+      // Execute endTurn: user auto-attacks then AI attacks (force AI to attack minions)
+      jest.spyOn(global.Math, 'random').mockReturnValue(0);
+      game.endTurn();
+      global.Math.random.mockRestore();
+      const state = game.getState();
+      // Skeleton should be reborn
+      expect(state.userBoard).toHaveLength(1);
+      const revived = state.userBoard[0];
+      expect(revived.currentHealth).toBe(1);
+      expect(revived.reborn).toBe(false);
+      // Logs include death and reborn
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          `${skeleton.name} dies`,
+          `${skeleton.name} is reborn!`
+        ])
+      );
+    });
   });
   });
 });
