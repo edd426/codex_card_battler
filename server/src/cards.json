@@ -1,6 +1,6 @@
 [
   { "id": 1, "name": "Squire", "attack": 1, "health": 2, "manaCost": 1, "image": null },
-  { "id": 2, "name": "Archer", "attack": 2, "health": 1, "manaCost": 2, "image": null },
+  { "id": 2, "name": "Archer", "attack": 2, "health": 1, "manaCost": 2, "image": null, "poisonous": true },
   { "id": 3, "name": "Knight", "attack": 3, "health": 4, "manaCost": 3, "image": null  },
   { "id": 4, "name": "Mage", "attack": 4, "health": 1, "manaCost": 4, "image": null },
   { "id": 5, "name": "Giant", "attack": 5, "health": 8, "manaCost": 7, "image": null },
@@ -40,7 +40,7 @@
   { "id": 14, "name": "Skeleton", "attack": 1, "health": 1, "manaCost": 1, "image": null, "reborn": true },
   { "id": 15, "name": "Zombie", "attack": 2, "health": 2, "manaCost": 2, "image": null, "reborn": true },
   { "id": 16, "name": "Elemental", "attack": 4, "health": 5, "manaCost": 5, "image": null },
-  { "id": 17, "name": "Assassin", "attack": 5, "health": 2, "manaCost": 4, "image": null },
+  { "id": 17, "name": "Assassin", "attack": 5, "health": 2, "manaCost": 4, "image": null, "poisonous": true },
   { "id": 18, "name": "Paladin", "attack": 2, "health": 5, "manaCost": 4, "image": null },
   { "id": 19, "name": "Shaman", "attack": 3, "health": 5, "manaCost": 5, "image": null },
   { "id": 20, "name": "Hunter", "attack": 4, "health": 2, "manaCost": 3, "image": null },
@@ -61,7 +61,7 @@
   { "id": 26, "name": "Sorcerer", "attack": 4, "health": 3, "manaCost": 4, "image": null },
   { "id": 27, "name": "Warlord", "attack": 6, "health": 6, "manaCost": 8, "image": null },
   { "id": 28, "name": "Titan", "attack": 8, "health": 8, "manaCost": 10, "image": null },
-  { "id": 29, "name": "Spirit", "attack": 1, "health": 1, "manaCost": 1, "image": null },
+  { "id": 29, "name": "Spirit", "attack": 1, "health": 1, "manaCost": 1, "image": null, "poisonous": true },
   { "id": 30, "name": "Elemental Lord", "attack": 7, "health": 7, "manaCost": 9, "image": null }
   ,
   {

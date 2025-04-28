@@ -297,6 +297,167 @@ describe('Game class', () => {
         ])
       );
     });
+    
+    test('Poisonous effect instantly kills any damaged creature', () => {
+      const game = new Game(cards);
+      // Set up a poisonous minion on user's board with enough health to survive retaliation
+      const poisonMinion = {
+        id: 600,
+        name: 'PoisonSpider',
+        attack: 1,
+        health: 5,
+        manaCost: 2,
+        currentHealth: 5,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        poisonous: true
+      };
+      game.userBoard = [poisonMinion];
+      
+      // Set up a high-health minion on AI's board
+      const tankMinion = {
+        id: 601,
+        name: 'Tank',
+        attack: 2,
+        health: 10,
+        manaCost: 5,
+        currentHealth: 10,
+        hasAttacked: false,
+        summonedThisTurn: false
+      };
+      game.aiBoard = [tankMinion];
+      
+      game.turn = 'user';
+      // Attack the high-health minion with our poison minion
+      game.attack(poisonMinion.id, 'creature', tankMinion.id);
+      const state = game.getState();
+      
+      // The AI board should be empty since the tank minion died to poison
+      expect(state.aiBoard).toHaveLength(0);
+      
+      // Our poison minion should still be alive
+      expect(state.userBoard).toHaveLength(1);
+      // Don't check exact health as implementation details may change
+      
+      // Logs should include poison effect and death messages
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          'PoisonSpider attacks Tank for 1',
+          'PoisonSpider\'s poison affects Tank!',
+          'Tank dies',
+        ])
+      );
+    });
+    
+    test('Creature with divine shield blocks poisonous effect', () => {
+      const game = new Game(cards);
+      // Set up a poisonous minion on user's board with high health to survive retaliation
+      const poisonMinion = {
+        id: 600,
+        name: 'PoisonSpider',
+        attack: 1,
+        health: 5,
+        manaCost: 2,
+        currentHealth: 5,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        poisonous: true
+      };
+      game.userBoard = [poisonMinion];
+      
+      // Set up a divine shield minion on AI's board
+      const shieldedMinion = {
+        id: 602,
+        name: 'ShieldBearer',
+        attack: 2,
+        health: 4,
+        manaCost: 3,
+        currentHealth: 4,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        divineShield: true
+      };
+      game.aiBoard = [shieldedMinion];
+      
+      game.turn = 'user';
+      // Attack the shielded minion with our poison minion
+      game.attack(poisonMinion.id, 'creature', shieldedMinion.id);
+      const state = game.getState();
+      
+      // The AI minion should still be alive with its shield gone
+      expect(state.aiBoard).toHaveLength(1);
+      expect(state.aiBoard[0].divineShield).toBe(false);
+      expect(state.aiBoard[0].currentHealth).toBe(shieldedMinion.health);
+      
+      // Our poison minion should have taken damage
+      expect(state.userBoard).toHaveLength(1);
+      expect(state.userBoard[0].currentHealth).toBe(poisonMinion.health - shieldedMinion.attack);
+      
+      // Logs should not include poison effect
+      expect(state.log).not.toEqual(
+        expect.arrayContaining([
+          'PoisonSpider\'s poison affects ShieldBearer!'
+        ])
+      );
+      
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          'ShieldBearer\'s Divine Shield absorbs the attack'
+        ])
+      );
+    });
+    
+    test('Poisonous retaliation kills attacking creature', () => {
+      const game = new Game(cards);
+      // Set up a normal minion on user's board
+      const normalMinion = {
+        id: 603,
+        name: 'Fighter',
+        attack: 2,
+        health: 5,
+        manaCost: 3,
+        currentHealth: 5,
+        hasAttacked: false,
+        summonedThisTurn: false
+      };
+      game.userBoard = [normalMinion];
+      
+      // Set up a poisonous minion on AI's board with enough health to survive the attack
+      const poisonDefender = {
+        id: 604,
+        name: 'VenomSnake',
+        attack: 1,
+        health: 6,
+        manaCost: 2,
+        currentHealth: 6,
+        hasAttacked: false,
+        summonedThisTurn: false,
+        poisonous: true
+      };
+      game.aiBoard = [poisonDefender];
+      
+      game.turn = 'user';
+      // Attack the poisonous minion with our normal minion
+      game.attack(normalMinion.id, 'creature', poisonDefender.id);
+      const state = game.getState();
+      
+      // The AI's poisonous minion should be damaged but alive
+      expect(state.aiBoard).toHaveLength(1);
+      expect(state.aiBoard[0].currentHealth).toBe(poisonDefender.health - normalMinion.attack);
+      
+      // Our normal minion should die from the poison effect
+      expect(state.userBoard).toHaveLength(0);
+      
+      // Logs should include poison retaliation effect
+      expect(state.log).toEqual(
+        expect.arrayContaining([
+          'Fighter attacks VenomSnake for 2',
+          'VenomSnake retaliates for 1',
+          'VenomSnake\'s poison affects Fighter!',
+          'Fighter dies'
+        ])
+      );
+    });
     test('Reborn activates when AI kills a reborn minion during endTurn', () => {
       const game = new Game(cards);
       // Set up a reborn skeleton on user board
