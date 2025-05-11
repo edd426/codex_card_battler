@@ -8,36 +8,56 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-      
+
     - name: Log in to Azure
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
+
+    # Alternative ACR authentication using Azure CLI
+    - name: Log in to ACR using Azure CLI
+      run: |
+        az acr login --name $(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d'.' -f1)
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
-      
-    - name: Log in to Azure Container Registry
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
-        
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
         context: .
         push: true
         tags: ${{ secrets.ACR_LOGIN_SERVER }}/card-battler:${{ github.sha }}
-        
+
+    # Create Container Apps environment if it doesn't exist
+    - name: Create Container Apps environment
+      run: |
+        az containerapp env create \
+          --name card-battler-env \
+          --resource-group card-battler-rg \
+          --location eastus \
+          --logs-workspace-id $(az monitor log-analytics workspace create -g card-battler-rg -n card-battler-logs --query workspaceId -o tsv) \
+          --logs-workspace-key $(az monitor log-analytics workspace create -g card-battler-rg -n card-battler-logs --query primarySharedKey -o tsv)
+      continue-on-error: true
+
+    # Deploy using Azure CLI for more control
     - name: Deploy to Azure Container Apps
-      uses: azure/container-apps-deploy-action@v1
-      with:
-        resourceGroup: card-battler-rg
-        containerAppName: card-battler
-        imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/card-battler:${{ github.sha }}
+      run: |
+        az containerapp create \
+          --name card-battler \
+          --resource-group card-battler-rg \
+          --environment card-battler-env \
+          --image ${{ secrets.ACR_LOGIN_SERVER }}/card-battler:${{ github.sha }} \
+          --target-port 3001 \
+          --ingress external \
+          --query properties.configuration.ingress.fqdn \
+          --registry-server ${{ secrets.ACR_LOGIN_SERVER }} \
+          || az containerapp update \
+             --name card-battler \
+             --resource-group card-battler-rg \
+             --image ${{ secrets.ACR_LOGIN_SERVER }}/card-battler:${{ github.sha }} \
+             --registry-server ${{ secrets.ACR_LOGIN_SERVER }}
