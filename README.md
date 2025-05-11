@@ -29,6 +29,30 @@ A simple card battler game built with Node.js and React. Players summon creature
    ```
 4. Open your browser at `http://localhost:3000` to play.
 
+### Testing
+The application includes comprehensive tests for both API and socket-based PvP functionality:
+
+1. **Run tests (recommended approach, skips socket tests for reliability)**:
+   ```bash
+   npm test
+   ```
+2. Run all tests including socket tests (may be less reliable):
+   ```bash
+   npm run test:all
+   ```
+3. Run specific test groups:
+   ```bash
+   npm run test:api    # API tests only
+   npm run test:pvp    # PvP logic tests only
+   npm run test:socket # Socket tests only
+   ```
+
+**Important Notes**:
+- The test infrastructure automatically starts and stops the server when running tests
+- Socket tests can be unreliable due to timing and networking dependencies
+- By default, `npm test` skips socket tests for better reliability
+- See `server/test/SOCKET_TESTS.md` for more details on socket test reliability
+
 ## Deploying to Render
 
 You can host this app online for free on Render:

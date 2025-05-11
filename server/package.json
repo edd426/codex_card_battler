@@ -5,7 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest --detectOpenHandles",
+    "test": "SKIP_SOCKET=true jest --config=jest.config.js",
+    "test:all": "jest --config=jest.config.js",
+    "test:api": "jest --config=jest.config.js api.test.js game.test.js",
+    "test:pvp": "jest --config=jest.config.js \"pvp.*\\.test\\.js\"",
+    "test:socket": "jest --config=jest.config.js socket.test.js",
     "rarity": "node scripts/calcRarity.js",
     "simulate": "node scripts/simulate.js",
     "gen-art": "node scripts/generatePlaceholders.js",
@@ -15,10 +19,13 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "openai": "^4.96.0"
+    "openai": "^4.96.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0" 
   },
   "devDependencies": {
     "jest": "^29.0.0",
+    "socket.io-client": "^4.8.1",
     "supertest": "^6.3.0"
   }
 }
